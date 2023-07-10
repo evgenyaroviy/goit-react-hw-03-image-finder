@@ -1,6 +1,10 @@
 import { Component } from "react";
 import { Searchbar } from "./Searchbar/Searchbar";
 import { ImageGallery } from "./ImageGallery/ImageGallery";
+import { Button } from "./Button/Button";
+import { Loader } from "./Loader/Loader";
+import toast, { Toaster } from 'react-hot-toast';
+import { requestApi } from "./api"
 
 
 
@@ -15,16 +19,62 @@ export class App extends Component {
     isModalVisible: false,
   };
 
-  searchQuery = (query) => {
-    console.log(query);
-    this.setState({ list: [...query] });
+  async componentDidUpdate(prevProps, prevState) {
+    const { page, query } = this.state;
+    if (page !== prevState.page || query !== prevState.query) {
+      this.setState({ isLoading: true });
+      try {
+        const { hits, totalHits } = await requestApi(query, page);
+        if (hits.length === 0) {
+          toast.error(
+            'Sorry, nothing found. Try again'
+          );
+        }
+        this.setState(prevState => ({
+          list: [...prevState.list, ...hits],
+          loadMore: this.state.page < Math.ceil(totalHits / 12),
+        }));
+      } catch (error) {
+        console.log(error.message);
+      } finally {
+        this.setState({ isLoading: false });
+      }
+    }
+  }
+
+  handleChange = query => {
+    this.setState(prevState => {
+      if (prevState.query === query) {
+        return null
+      } else {
+        return { query, list: [], page: 1 };
+      }
+    });
+  };
+
+searchQuery = async() => {
+    console.log(this.state.query);
+    const data = await requestApi(this.state.query);
+    const images = data.hits;
+    this.setState({list: images})   
+  }
+
+onClickLoadMore = () => {
+    this.setState(prevState => ({ page: prevState.page + 1 }));
+  };
+
+  onImgClick = () => {
+    
   }
 
   render() {
-    const { list } = this.state;
+    const { list, isLoading, loadMore, modalData, isModalVisible } = this.state;
     return (<div>
-      <Searchbar searchQuery={this.searchQuery} />
-      <ImageGallery gallery={list} />
+      <Searchbar handleChange={this.handleChange} />
+      <Toaster />
+      {list && (<ImageGallery gallery={list} onImgClick={this.onImgClick} />)}
+      {isLoading && <Loader />}
+      {loadMore && <Button onClick={this.onClickLoadMore} />}
     </div >
     );
   }

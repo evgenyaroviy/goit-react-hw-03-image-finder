@@ -19,4 +19,5 @@
 img {
       display: block;
       border-radius: 3px;
+      max-height: 750px;
 }

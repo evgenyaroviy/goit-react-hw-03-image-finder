@@ -3,6 +3,7 @@ import { Searchbar } from "./Searchbar/Searchbar";
 import { ImageGallery } from "./ImageGallery/ImageGallery";
 import { Button } from "./Button/Button";
 import { Loader } from "./Loader/Loader";
+import { Modal } from "./Modal/Modal";
 import toast, { Toaster } from 'react-hot-toast';
 import { requestApi } from "./api"
 
@@ -63,8 +64,14 @@ onClickLoadMore = () => {
     this.setState(prevState => ({ page: prevState.page + 1 }));
   };
 
-  onImgClick = () => {
-    
+  modalOpen =  (largeImage, tags) => {
+    this.setState({ modalData: { largeImage, tags }, isModalVisible: true });
+    document.body.classList.add('no-scroll');
+  };
+
+  modalClose = () => {
+    this.setState({ isModalVisible: false, modalData: null });
+    document.body.classList.remove('no-scroll');
   }
 
   render() {
@@ -72,9 +79,10 @@ onClickLoadMore = () => {
     return (<div>
       <Searchbar handleChange={this.handleChange} />
       <Toaster />
-      {list && (<ImageGallery gallery={list} onImgClick={this.onImgClick} />)}
+      {list && (<ImageGallery gallery={list} modalOpen={this.modalOpen} />)}
       {isLoading && <Loader />}
       {loadMore && <Button onClick={this.onClickLoadMore} />}
+      {isModalVisible && (<Modal modalData={modalData} modalClose={this.modalClose} />)}
     </div >
     );
   }
